@@ -417,7 +417,8 @@ if __name__ == "__main__":
     nhanes_df['RIDRETH3'].replace([1.0], 'Mexican American', inplace=True)
     nhanes_df['RIDRETH3'].replace([2.0], 'Hispanic Other', inplace=True)
     nhanes_df['RIDRETH3'].replace([6.0], 'Asian', inplace=True)
-    nhanes_df['RIDRETH3'].replace([7.0], 'Other Race or Multi-Racial', inplace=True)
+    nhanes_df['RIDRETH3'].replace([7.0], 'Other Race or Multi-Racial',
+    inplace=True)
     
     ethnicity_dic = {
         'title': 'Ethnicity of Adult Study Participants',
