@@ -1,5 +1,12 @@
 # Predicting Blood Health 
 ## Table of contents
+1. [Background](#Background)
+2. [Data Retrieval](#Data-Retrieval)
+3. [Data Description](#Data-Description)
+4. [Data Cleaning](#Data-Cleaning)
+5. [EDA](#EDA)
+6. [Model Performance](#Model-Performance)
+7. [Conclusion](#Conclusion)
 
 # Goal
 The goal of this project was to attempt to predict blood health based on easily obtained measurements and information from the 2017-2018 NHANES data which was recently published. 
@@ -11,7 +18,7 @@ This is likely possible because of the well studied relationship between exercis
 We will look specifically at the ratio of Total blood cholesterol to HDL cholesterol with this model. The ratio of the two has been shown to be more predictive than looking at one or the other and in conjunction with high sensitivity CRP (another blood marker) these are highly predictive of heart attacks ([N. Rifia P. Ridcker 2001](https://academic.oup.com/clinchem/article/47/3/403/5639279)). Blood health is not always evaluated at regular intervals being able to predict it therefore using easier to obtain data would be highly beneficial to doctors and health insurance companies to see who may need to have their blood examined. 
 
 
-# Data retrieval
+# Data Retrieval
 NHANES data is stored in XPT format which is often used in US government developed in the late 1980's. The file names are all abbreviated and after downloading the data the string listing the files was copied from terminal and processed in a python document to open and convert the chosen files into a pandas DataFrames. The target DataFrames were pulled and outer merged. These were then joined with the potential features keeping only the participants that had target data.
 
 # Data Description
@@ -21,6 +28,8 @@ Files were pulled specifically from the Demographics, Examination, Laboratory(ta
 <img src="images/origin_df_chol_target.png">
 </p>
 An initial overview of the data set including all columns from the selected files showed that quite a bit of data cleaning was necessary.
+
+# Data Cleaning 
 
 The sheer number of files included in this data set is so high that I have not counted the files. The initial number of participants included was 8366 for which there were 405 columns representing potential features. AS you can see above there are a lot of missing data points. Each of these features had specific protocols for its recording and storage. Some columns were only partial descriptions of relevant information and required one or more columns to elucidate the data. Not every column was applicable to the entire participant group which is one of the challenges the model faces.
 
@@ -80,6 +89,8 @@ Below is a summary of which columns were utilized from each of the document cate
 | | Smoked 100 Cigarette | Country of Birth |
 | | Active Smoker | 
 | | 
+
+<br/><br/>
 <br/><br/>
 This reduced list of features was much more targeted with significantly less NaN values. Due to the reasonable number of columns future tailoring will be feasible. The below tags were left in tact to show as an example the original coding of the data set.
 <p align="center">
