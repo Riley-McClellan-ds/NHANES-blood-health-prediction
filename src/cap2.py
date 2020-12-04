@@ -181,7 +181,7 @@ def make_teeth_column(nhanes_df):
         nhanes_df ([pandas DataFrame]): df containing nhanes information
 
     Returns:
-        [type]: [description]
+        [DataFrame]: nhanes data with Teeth Feature added.
     """    
     nhanes_df['SUMTEETH'] = 0
 
@@ -205,13 +205,14 @@ model_nhanes_df = nhanes_df[chosen_cols]
 
 #rename cols for graph
 def importance_columns_renamer(model_nhanes_df):
-    """[summary]
+    """Renames columns for creation of feature importance graph
 
     Args:
-        model_nhanes_df ([type]): [description]
+        model_nhanes_df ([DataFrame]): the dataframe used to create
+        our random forest model.
 
     Returns:
-        [type]: [description]
+        [Dataframe]: [A Dataframe to be used only for graphing puropses.]
     """    
     model_nhanes_df = model_nhanes_df.rename(columns={
                 'BMXBMI': 'BMI', 'BMXWAIST ': 'Waist size', "RIDAGEYR": 'Age',
@@ -268,6 +269,16 @@ for i in nhanes_features.columns:
 # print(y_pred.min())
 # print('predicted response:', y_pred, sep='\n')
 def run_random_forest(nhanes_features, target):
+    """Runs a random forest model
+
+    Args:
+        nhanes_features ([DataFrame]): DataFrame containing features\
+            that will be used to predict the target
+        target ([Numpy Array]): An array containing the target variable.
+
+    Returns:
+        [type]: [description]
+    """    
     X_train, X_test, y_train, y_test = train_test_split(\
         nhanes_features, target, random_state=12)
     print('\n random forest')
@@ -302,6 +313,8 @@ class plot:
  
 
     def plot_importances(self):
+        """ Plots importance ranking of top features in Random Forest model
+        """        
         n=10
         importances = target_forest.feature_importances_[:n]
         std = np.std([tree.feature_importances_ for tree in target_forest.estimators_],
@@ -329,8 +342,14 @@ class plot:
 
 
     def plot_variable_hist(self, colors='Set3', bin_size=32):
+        """Takes in specifications and produces a graph
 
-        ax = sns.histplot(x=self.variable, data=self.df, color='peru', bins=bin_size)
+        Args:
+            colors (str, optional): colors to be assigned to "pallete" feature in \
+                seaborn. Defaults to 'Set3'.
+            bin_size (int, optional): Histogram bin size. Defaults to 32.
+        """        
+        ax = sns.histplot(x=self.variable, data=self.df, palette=colors, bins=bin_size)
         ax.set_xlabel(self.terms['xlabel'])
         ax.set_ylabel(self.terms['ylabel'])
         if self.variable =='RIDRETH3':
@@ -341,6 +360,11 @@ class plot:
         plt.show()
 
     def sbcountplot(self, colors="Set3" ):
+        """Creats a histogram-like barchart that sums categories in a given column
+
+        Args:
+            colors (str, optional): [description]. Defaults to "Set3".
+        """        
         ax = sns.countplot(x=self.variable, data=self.df, palette=colors, order = nhanes_df[self.variable].value_counts().index)
         ax.set_xlabel(self.terms['xlabel'])
         ax.set_ylabel(self.terms['ylabel'])
