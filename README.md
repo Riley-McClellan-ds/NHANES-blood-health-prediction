@@ -120,11 +120,11 @@ SMOTER would likely be helpful in this situation as there is a limited number of
 
 Finally a critical piece in understanding cholesterol is understanding how it is measured. The state the body is in when blood is drawn will heavily influence the levels of cholesterol in the blood. If food is consumed in close proximity to the blood draw it can significantly affect the results of the test. Fasting information therefore should be considered a part of the target. For this reason the model will be trained on a PCA decomposition encompassing both the original target and fasting protocol information. 
 
-[] Standardize Data
-[] Add previous NHANES data
-[] Add more engineered features
-[] Target PCA
-[] SMOTER
+- [] Standardize Data
+- [] Add previous NHANES data
+- [] Add more engineered features
+- [] Target PCA
+- [] SMOTER
 
 
 
