@@ -36,6 +36,7 @@ def load_NHANES_data():
         [pandas DataFrame]: A DataFrame containing complete column list from each 
         file selected for use.
     """    
+
     lab = "HSCRP_J.XPT HDL_J.XPT TCHOL_J.XPT FASTQX_J.XPT"
     more_lab = "ALB_CR_J.XPT GLU_J.XPT CRCO_J.XPT FOLFMS_J.XPT \
     HEPB_S_J.XPT  IHGEM_J.XPT   UCM_J.XPT  VIC_J.XPT BIOPRO_J.XPT \
@@ -95,6 +96,8 @@ def load_NHANES_data():
     nhanes_df = nhanes_df.merge(df_dic['PAQ_J.XPT'], on='SEQN', how='left')
     nhanes_df = nhanes_df.merge(df_dic['SMQ_J.XPT'], on='SEQN', how='left')
     nhanes_df = nhanes_df.merge(df_dic['SMQFAM_J.XPT'], on='SEQN', how='left')
+    
+    nhanes_df = nhanes_df[nhanes_df['RIDEXAGM'].isnull()]
     return nhanes_df
 
 nhanes_df = load_NHANES_data()
@@ -367,7 +370,7 @@ if __name__ == "__main__":
 
     #remove children 
     model_nhanes_df = model_nhanes_df[model_nhanes_df['RIDEXAGM'].isnull()]
-    nhanes_df = nhanes_df[nhanes_df['RIDAGEYR'].notnull()]
+    # nhanes_df = nhanes_df[nhanes_df['RIDAGEYR'].notnull()]
 
     # plot missingno 
     # msno.matrix(model_nhanes_df)
@@ -393,12 +396,12 @@ if __name__ == "__main__":
     nhanes_df['RIDRETH3'].replace([7.0], 'Other Race or Multi-Racial', inplace=True)
     
     ethnicity_dic = {
-        'title': 'Ethnicity of Study Participants',
+        'title': 'Ethnicity of Adult Study Participants',
         'ylabel': 'Number of People',
         'xlabel': 'Ethnicities'
     }
     ethnicity_plot = plot('RIDRETH3', df=nhanes_df, terms=ethnicity_dic)
-    # ethnicity_plot.sbcountplot()
+    ethnicity_plot.sbcountplot()
 
 
     tooth_dic = {
