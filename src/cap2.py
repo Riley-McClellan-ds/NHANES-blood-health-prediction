@@ -25,7 +25,12 @@ pd.set_option('display.max_columns', None)
 
 
 def load_NHANES_data():
-    """[summary]
+    """Loads nhanes data by splitting a strings containing lists of files
+    indto individual file names and then converting those files
+    from XPT format into a pandas DataFrame then merging appropriate
+    files into output Datafram
+
+    Extra files are left in code for ease of addition into main DataFrame
 
     Returns:
         [pandas DataFrame]: A DataFrame containing complete column list from each 
@@ -80,19 +85,19 @@ def load_NHANES_data():
 
     x_data = lst[:2]
 
-    expl_df = lab_df.copy()
+    nhanes_df = lab_df.copy()
     for idx, folder in enumerate(x_data):
         for file in folder:
-            expl_df = expl_df.merge(df_dic[file],\
+            nhanes_df = nhanes_df.merge(df_dic[file],\
                  on='SEQN', how='left') #, lsuffix='_left', rsuffix='_right')
 
-    expl_df = expl_df.merge(df_dic['DUQ_J.XPT'], on='SEQN', how='left')
-    expl_df = expl_df.merge(df_dic['PAQ_J.XPT'], on='SEQN', how='left')
-    expl_df = expl_df.merge(df_dic['SMQ_J.XPT'], on='SEQN', how='left')
-    expl_df = expl_df.merge(df_dic['SMQFAM_J.XPT'], on='SEQN', how='left')
-    return expl_df
+    nhanes_df = nhanes_df.merge(df_dic['DUQ_J.XPT'], on='SEQN', how='left')
+    nhanes_df = nhanes_df.merge(df_dic['PAQ_J.XPT'], on='SEQN', how='left')
+    nhanes_df = nhanes_df.merge(df_dic['SMQ_J.XPT'], on='SEQN', how='left')
+    nhanes_df = nhanes_df.merge(df_dic['SMQFAM_J.XPT'], on='SEQN', how='left')
+    return nhanes_df
 
-expl_df = load_NHANES_data()
+nhanes_df = load_NHANES_data()
 
 
 def rem_nan_cols(df):
@@ -124,7 +129,7 @@ def rem_nan_cols(df):
 
 def check_nan_amount(df, columns):
     '''Detects and locates presence of NaN values.
-    ARGS:
+    Args:
         df (pandas DataFrame):
         columns (list(STR)): List of columns to search
     Returns:
@@ -143,12 +148,12 @@ def check_nan_amount(df, columns):
 # 0 is hdl #1 is total cholesterol #2 is crp
 
 
-expl_df['HDL_OVER_TCHOL'] = expl_df['LBDHDD']/expl_df['LBXTC'] #for model
-# expl_df['HDL_OVER_TCHOL'] = expl_df['LBXTC']/expl_df['LBDHDD'] #for plot
+nhanes_df['HDL_OVER_TCHOL'] = nhanes_df['LBDHDD']/nhanes_df['LBXTC'] #for model
+# nhanes_df['HDL_OVER_TCHOL'] = nhanes_df['LBXTC']/nhanes_df['LBDHDD'] #for plot
 
 target_df = pd.DataFrame()
-target_df['SEQN'] = expl_df['SEQN']
-target_df['HDL_OVER_TCHOL'] = expl_df['HDL_OVER_TCHOL'] 
+target_df['SEQN'] = nhanes_df['SEQN']
+target_df['HDL_OVER_TCHOL'] = nhanes_df['HDL_OVER_TCHOL'] 
 
 
 chosen_cols = ['DMDHHSIZ','SEQN', 'RIDEXAGM', 'RIDAGEYR', 'DMDCITZN', 
@@ -161,82 +166,90 @@ chosen_cols = ['DMDHHSIZ','SEQN', 'RIDEXAGM', 'RIDAGEYR', 'DMDCITZN',
 #the chol levels. These will be used for pca in future model
 
 # For future to perform pca on target 
-# expl_df['PHAFSTHRMN'] = expl_df['PHAFSTHR'] * 60
-# expl_df['PHAFSTHRMN'] +=expl_df['PHAFSTMN']
-# expl_df['PHACOFHRMN'] = expl_df['PHACOFHR'] * 60
-# expl_df['PHACOFHRMN'] +=expl_df['PHACOFMN']
+# nhanes_df['PHAFSTHRMN'] = nhanes_df['PHAFSTHR'] * 60
+# nhanes_df['PHAFSTHRMN'] +=nhanes_df['PHAFSTMN']
+# nhanes_df['PHACOFHRMN'] = nhanes_df['PHACOFHR'] * 60
+# nhanes_df['PHACOFHRMN'] +=nhanes_df['PHACOFMN']
 
-def make_teeth_column(expl_df):
-    expl_df['SUMTEETH'] = 0
-
-    for i in range(1,10):
-        expl_df[f'OHX0{i}TC'] = expl_df[f'OHX0{i}TC'].replace([2], 0)
-        for num in range(3, 6):
-            expl_df[f'OHX0{i}TC'] = expl_df[f'OHX0{i}TC'].replace([num], 1)
-        expl_df['SUMTEETH'] += expl_df[f'OHX0{i}TC']
-
-    for i in range(10, 33):
-        expl_df[f'OHX{i}TC'] = expl_df[f'OHX{i}TC'].replace([2], 0)
-        for num in range(3, 6):
-            expl_df[f'OHX{i}TC'] = expl_df[f'OHX{i}TC'].replace([num], 1)
-        expl_df['SUMTEETH'] += expl_df[f'OHX{i}TC']
-    expl_df['PAD680'] = expl_df['PAD680'].replace(9999, -1)
-    return expl_df
-
-expl_df = make_teeth_column(expl_df)
-
-fin_df = expl_df[chosen_cols]
-
-#rename cols for graph
-def importance_columns_renamer(fin_df):
-    """[summary]
+def make_teeth_column(nhanes_df):
+    """Engineers new features regarding teeth
 
     Args:
-        fin_df ([type]): [description]
+        nhanes_df ([pandas DataFrame]): df containing nhanes information
 
     Returns:
         [type]: [description]
     """    
-    fin_df = fin_df.rename(columns={
+    nhanes_df['SUMTEETH'] = 0
+
+    for i in range(1,10):
+        nhanes_df[f'OHX0{i}TC'] = nhanes_df[f'OHX0{i}TC'].replace([2], 0)
+        for num in range(3, 6):
+            nhanes_df[f'OHX0{i}TC'] = nhanes_df[f'OHX0{i}TC'].replace([num], 1)
+        nhanes_df['SUMTEETH'] += nhanes_df[f'OHX0{i}TC']
+
+    for i in range(10, 33):
+        nhanes_df[f'OHX{i}TC'] = nhanes_df[f'OHX{i}TC'].replace([2], 0)
+        for num in range(3, 6):
+            nhanes_df[f'OHX{i}TC'] = nhanes_df[f'OHX{i}TC'].replace([num], 1)
+        nhanes_df['SUMTEETH'] += nhanes_df[f'OHX{i}TC']
+    nhanes_df['PAD680'] = nhanes_df['PAD680'].replace(9999, -1)
+    return nhanes_df
+
+nhanes_df = make_teeth_column(nhanes_df)
+
+model_nhanes_df = nhanes_df[chosen_cols]
+
+#rename cols for graph
+def importance_columns_renamer(model_nhanes_df):
+    """[summary]
+
+    Args:
+        model_nhanes_df ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """    
+    model_nhanes_df = model_nhanes_df.rename(columns={
                 'BMXBMI': 'BMI', 'BMXWAIST ': 'Waist size', "RIDAGEYR": 'Age',
                 'BMXHT': 'Height', 'BPXSY1': 'S. Blood Pressure', 
                 'BPXDI1': 'D. Blood Pressure', "SUMTEETH": "Missing/Damaged Teeth",
                 "DMDHHSIZ": "Household size", "RIDEXMON": 'Season of Data collected', 
                 "DMDCITZN": "Citizenship status"
             })
-    return fin_df
+    return model_nhanes_df
 
-def separate_genders(expl_df):
+def separate_genders(nhanes_df):
     """Splits dataframe by gender
 
     Returns:
         2 DataFrames: Gendered DataFrames
     """    
-    male_df = expl_df[expl_df['RIAGENDR'] == 1.0]
-    female_df = expl_df[expl_df['RIAGENDR'] == 2.0]
+    male_df = nhanes_df[nhanes_df['RIAGENDR'] == 1.0]
+    female_df = nhanes_df[nhanes_df['RIAGENDR'] == 2.0]
     return male_df, female_df
 
 # target_df.to_csv('/home/riley/Desktop/DSI/capstone2/'+  'chol_crp_target_df.csv')
-# fin_df.to_csv('/home/riley/Desktop/DSI/capstone2/'+ 'demo_quest_exam_feat_df.csv')
+# model_nhanes_df.to_csv('/home/riley/Desktop/DSI/capstone2/'+ 'demo_quest_exam_feat_df.csv')
 
 
-fin_df= fin_df.set_index('SEQN')
+model_nhanes_df= model_nhanes_df.set_index('SEQN')
 
-chol = pd.DataFrame(target_df[['SEQN', 'HDL_OVER_TCHOL']])
-chol = chol.set_index('SEQN')
-chol = chol.dropna(how='all')
+target = pd.DataFrame(target_df[['SEQN', 'HDL_OVER_TCHOL']])
+target = target.set_index('SEQN')
+target = target.dropna(how='all')
 
-chol_features = chol.join(fin_df, on="SEQN", how='left').drop('HDL_OVER_TCHOL', axis=1)
-chol_features = chol_features[chol_features['RIDEXAGM'].isnull()]
-chol_features.drop('RIDEXAGM', axis=1, inplace=True)
+nhanes_features = target.join(model_nhanes_df, on="SEQN", how='left').drop('HDL_OVER_TCHOL', axis=1)
+nhanes_features = nhanes_features[nhanes_features['RIDEXAGM'].isnull()]
+nhanes_features.drop('RIDEXAGM', axis=1, inplace=True)
 
-chol = chol.merge(chol_features, on='SEQN', how='right')
-chol = pd.DataFrame(chol['HDL_OVER_TCHOL'])
+target = target.merge(nhanes_features, on='SEQN', how='right')
+target = pd.DataFrame(target['HDL_OVER_TCHOL'])
 
-chol = chol.to_numpy()
+target = target.to_numpy()
 
-for i in chol_features.columns:
-    chol_features[i] = chol_features[i].replace([np.nan], -999)
+for i in nhanes_features.columns:
+    nhanes_features[i] = nhanes_features[i].replace([np.nan], -999)
 
 
 
@@ -251,35 +264,35 @@ for i in chol_features.columns:
 # print(model.score(cholX_test, choly_test))
 # print(y_pred.min())
 # print('predicted response:', y_pred, sep='\n')
-def run_random_forest(chol_features, chol):
-    cholX_train, cholX_test, choly_train, choly_test = train_test_split(\
-        chol_features, chol, random_state=12)
+def run_random_forest(nhanes_features, target):
+    X_train, X_test, y_train, y_test = train_test_split(\
+        nhanes_features, target, random_state=12)
     print('\n random forest')
-    chol_forest = RandomForestRegressor(n_estimators=600, \
+    target_forest = RandomForestRegressor(n_estimators=600, \
         random_state=8, n_jobs=-1)
-    chol_forest.fit(cholX_train, choly_train.ravel())
-    print(chol_forest.score(cholX_test, choly_test.ravel()))
-    chol_forest.predict(cholX_test)
-    return chol_forest
+    target_forest.fit(X_train, y_train.ravel())
+    print(target_forest.score(X_test, y_test.ravel()))
+    target_forest.predict(X_test)
+    return target_forest
 
-def correct_chol_bins(expl_df):
+def correct_target_bins(nhanes_df):
     """Creates fake values that cause the bins of the
     cholesterol graph to line up with 0 and 10
     Returns:
         (Pandas DataFrame): temporary version of datframe 
         for graphing purposes only
     """    
-    expl_df = expl_df[expl_df['HDL_OVER_TCHOL'] <= 10]
-    print(expl_df['HDL_OVER_TCHOL'].max())
-    expl_df.loc[:1 , 'HDL_OVER_TCHOL'] = 0.0
-    expl_df.loc[1:2 , 'HDL_OVER_TCHOL'] = 0.6
-    expl_df.loc[2:3 , 'HDL_OVER_TCHOL'] = 10.0
-    return expl_df
+    nhanes_df = nhanes_df[nhanes_df['HDL_OVER_TCHOL'] <= 10]
+    print(nhanes_df['HDL_OVER_TCHOL'].max())
+    nhanes_df.loc[:1 , 'HDL_OVER_TCHOL'] = 0.0
+    nhanes_df.loc[1:2 , 'HDL_OVER_TCHOL'] = 0.6
+    nhanes_df.loc[2:3 , 'HDL_OVER_TCHOL'] = 10.0
+    return nhanes_df
 
 
 class plot:
     
-    def __init__(self, variable, df=expl_df, terms=None):
+    def __init__(self, variable, df=nhanes_df, terms=None):
         self.variable = variable
         self.terms = terms
         self.df = df
@@ -287,11 +300,11 @@ class plot:
 
     def plot_importances(self):
         n=10
-        importances = chol_forest.feature_importances_[:n]
-        std = np.std([tree.feature_importances_ for tree in chol_forest.estimators_],
+        importances = target_forest.feature_importances_[:n]
+        std = np.std([tree.feature_importances_ for tree in target_forest.estimators_],
                     axis=0)
         indices = np.argsort(importances)[::-1]
-        features = list(chol_features.columns[indices])
+        features = list(nhanes_features.columns[indices])
 
         # Print the feature ranking
         print("\n13. Feature ranking:")
@@ -325,7 +338,7 @@ class plot:
         plt.show()
 
     def sbcountplot(self, colors="Set3" ):
-        ax = sns.countplot(x=self.variable, data=self.df, palette=colors, order = expl_df[self.variable].value_counts().index)
+        ax = sns.countplot(x=self.variable, data=self.df, palette=colors, order = nhanes_df[self.variable].value_counts().index)
         ax.set_xlabel(self.terms['xlabel'])
         ax.set_ylabel(self.terms['ylabel'])
         ax.set_title(self.terms['title'])
@@ -337,7 +350,7 @@ class plot:
 
 if __name__ == "__main__":
     # pass
-    run_random_forest(chol_features, chol)
+    run_random_forest(nhanes_features, target)
 
     feature_importances = plot('importances', dict())
     # feature_importances.plot_importances()
@@ -353,38 +366,38 @@ if __name__ == "__main__":
     # age_plot.plot_variable_hist(bin_size=16)
 
     #remove children 
-    fin_df = fin_df[fin_df['RIDEXAGM'].isnull()]
-    expl_df = expl_df[expl_df['RIDAGEYR'].notnull()]
+    model_nhanes_df = model_nhanes_df[model_nhanes_df['RIDEXAGM'].isnull()]
+    nhanes_df = nhanes_df[nhanes_df['RIDAGEYR'].notnull()]
 
     # plot missingno 
-    # msno.matrix(fin_df)
+    # msno.matrix(model_nhanes_df)
     # plt.show()
 
-    expl_df['Gender'] = expl_df['RIAGENDR']
-    expl_df['Gender'].replace([1.0], 'Male', inplace=True)
-    expl_df['Gender'].replace([2.0], 'Female', inplace=True)
+    nhanes_df['Gender'] = nhanes_df['RIAGENDR']
+    nhanes_df['Gender'].replace([1.0], 'Male', inplace=True)
+    nhanes_df['Gender'].replace([2.0], 'Female', inplace=True)
 
     gender_dic = {
         'title': 'Gender of Adult Study Participants',
         'xlabel': '',
         'ylabel': 'Number of people'
     }
-    gender_plot = plot('Gender', df=expl_df, terms=gender_dic)
+    gender_plot = plot('Gender', df=nhanes_df, terms=gender_dic)
     # gender_plot.sbcountplot(colors=['pink','skyblue'])
 
-    expl_df['RIDRETH3'].replace([3.0], 'Caucasian', inplace=True)
-    expl_df['RIDRETH3'].replace([4.0], 'Black', inplace=True)
-    expl_df['RIDRETH3'].replace([1.0], 'Mexican American', inplace=True)
-    expl_df['RIDRETH3'].replace([2.0], 'Hispanic Other', inplace=True)
-    expl_df['RIDRETH3'].replace([6.0], 'Asian', inplace=True)
-    expl_df['RIDRETH3'].replace([7.0], 'Other Race or Multi-Racial', inplace=True)
+    nhanes_df['RIDRETH3'].replace([3.0], 'Caucasian', inplace=True)
+    nhanes_df['RIDRETH3'].replace([4.0], 'Black', inplace=True)
+    nhanes_df['RIDRETH3'].replace([1.0], 'Mexican American', inplace=True)
+    nhanes_df['RIDRETH3'].replace([2.0], 'Hispanic Other', inplace=True)
+    nhanes_df['RIDRETH3'].replace([6.0], 'Asian', inplace=True)
+    nhanes_df['RIDRETH3'].replace([7.0], 'Other Race or Multi-Racial', inplace=True)
     
     ethnicity_dic = {
         'title': 'Ethnicity of Study Participants',
         'ylabel': 'Number of People',
         'xlabel': 'Ethnicities'
     }
-    ethnicity_plot = plot('RIDRETH3', df=expl_df, terms=ethnicity_dic)
+    ethnicity_plot = plot('RIDRETH3', df=nhanes_df, terms=ethnicity_dic)
     # ethnicity_plot.sbcountplot()
 
 
@@ -396,13 +409,13 @@ if __name__ == "__main__":
     tooth_plot = plot('SUMTEETH', terms=tooth_dic)
     # tooth_plot.plot_variable_hist()
     
-    chol_dic = {
+    target_dic = {
         'title': 'Histogram of Cholesterol values',
         'ylabel': 'People per Bin',
         'xlabel': 'Ratio of Total Cholesterol to HDL'
     }
-    chol_plot = plot('HDL_OVER_TCHOL', terms=chol_dic)
-    # chol_plot.plot_variable_hist(bin_size=20)
+    target_plot = plot('HDL_OVER_TCHOL', terms=target_dic)
+    # target_plot.plot_variable_hist(bin_size=20)
 
     
     
