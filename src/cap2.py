@@ -1,22 +1,16 @@
 import pandas as pd
 import numpy as np
-import xport
-import os
 import seaborn as sns
-from matplotlib import cm
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.linear_model import LinearRegression
 from sklearn import (
-    cluster, datasets, 
-    decomposition, ensemble, manifold, 
+    cluster, datasets,
+    decomposition, ensemble, manifold,
     random_projection, preprocessing)
 import missingno as msno
 
-#! PLEASE
-#! PLEASE HELP ME FIGURE OUT HOW TO LINT NOTHING IS WORKING AS DESCRIBED ON GOOGLE
-#! PLEASE 
 
 sns.set_theme(style="darkgrid")
 plt.style.use('ggplot')
@@ -33,7 +27,7 @@ def load_NHANES_data():
     Extra files are left in code for ease of addition into main DataFrame
 
     Returns:
-        [pandas DataFrame]: A DataFrame containing complete column list from each 
+        [pandas DataFrame]: A DataFrame containing complete column list from each
         file selected for use.
     """    
 
@@ -45,17 +39,17 @@ def load_NHANES_data():
     FETIB_J.XPT   HEPA_J.XPT    HIV_J.XPT   UIO_J.XPT COT_J.XPT FOLATE_J.XPT  \
         HEPBD_J.XPT   HSCRP_J.XPT   UCFLOW_J.XPT  UNI_J.XPT"
     questionnaire = "DUQ_J.XPT PAQ_J.XPT SMQ_J.XPT SMQFAM_J.XPT"  
-    # ADDITIONASL QUESTIONNAIRE: ACQ_J.XPT  DEQ_J.XPT  ECQ_J.XPT  IMQ_J.XPT 
-    # OSQ_J.XPT RHQ_J.XPT  SMQFAM_J.XPT  WHQMEC_J.XPT AUQ_J.XPT  DIQ_J.XPT  
-    # HEQ_J.XPT  KIQ_U_J.XPT  PAQ_J.XPT  RXQASA_J.XPT  SMQ_J.XPT BPQ_J.XPT 
-    # DLQ_J.XPT  HIQ_J.XPT  MCQ_J.XPT  PAQY_J.XPT  
-    # RXQ_DRUG.xpt  SMQRTU_J.XPT CDQ_J.XPT  DPQ_J.XPT  
-    # HSQ_J.XPT  OCQ_J.XPT   PFQ_J.XPT   RXQ_RX_J.XPT  
-    # SMQSHS_J.XPT DBQ_J.XPT  DUQ_J.XPT  HUQ_J.XPT  OHQ_J.XPT   
+    # ADDITIONASL QUESTIONNAIRE: ACQ_J.XPT  DEQ_J.XPT  ECQ_J.XPT  IMQ_J.XPT
+    # OSQ_J.XPT RHQ_J.XPT  SMQFAM_J.XPT  WHQMEC_J.XPT AUQ_J.XPT  DIQ_J.XPT
+    # HEQ_J.XPT  KIQ_U_J.XPT  PAQ_J.XPT  RXQASA_J.XPT  SMQ_J.XPT BPQ_J.XPT
+    # DLQ_J.XPT  HIQ_J.XPT  MCQ_J.XPT  PAQY_J.XPT
+    # RXQ_DRUG.xpt  SMQRTU_J.XPT CDQ_J.XPT  DPQ_J.XPT
+    # HSQ_J.XPT  OCQ_J.XPT   PFQ_J.XPT   RXQ_RX_J.XPT
+    # SMQSHS_J.XPT DBQ_J.XPT  DUQ_J.XPT  HUQ_J.XPT  OHQ_J.XPT
     # PUQMEC_J.XPT  SLQ_J.XPT  WHQ_J.XPT"
     demo = "DEMO_J.XPT"
     diet = "DR1TOT_J.XPT  DR2TOT_J.XPT  DS1TOT_J.XPT  DS2TOT_J.XPT  DSQTOT_J.XPT"
-    exam = 'BMX_J.XPT BPX_J.XPT  OHXDEN_J.XPT' 
+    exam = 'BMX_J.XPT BPX_J.XPT  OHXDEN_J.XPT'
     # THE FOLLOWING WERE REMOVED BECAUSE THEY ARE MORE EXPENSIVE THAN \
     # A BLOOD TEST 'OHXREF_J.XPT DXXFEM_J.XPT  DXX_J.XPT  DXXSPN_J.XPT  LUX_J.XPT '
 
@@ -78,7 +72,6 @@ def load_NHANES_data():
         for file in folder:
             df_dic[file] = pd.read_sas(f'{path}{file_locations[idx]}{file}',\
                  format='xport', encoding='utf-8')
-        
 
     lab_df = df_dic['HDL_J.XPT'].merge(df_dic['TCHOL_J.XPT'], \
         on='SEQN', how='outer').merge(df_dic['FASTQX_J.XPT'], on='SEQN', how='outer')
@@ -104,16 +97,15 @@ nhanes_df = load_NHANES_data()
 
 
 def rem_nan_cols(df):
-    """Identifies columns with NaN values and returns number of NaN values 
+    """Identifies columns with NaN values and returns number of NaN values
         per col
     Args:
-        df (pandas DataFrame) : 
+        df (pandas DataFrame) :
     Returns:
-       2 [List] : 2 lists in parralell with column name and number of NaN 
+       2 [List] : 2 lists in parralell with column name and number of NaN
        values respectively
        1 [set]: a set of columns where more than 80% of the data are NaN
-    """   
-    
+    """
     nan_columns = []
     nan_nums = [] # in parrallel with nan_columns
     df_over_80_nan = set()
@@ -123,10 +115,8 @@ def rem_nan_cols(df):
     for i in df.columns:
         if df[i].isnull().sum():
             if df[i].isnull().sum() > len(df)*.8:
-                df_80_nan.add(i)
-                
+                df_over_80_nan.add(i)           
             nan_nums.append(df[i].isnull().sum())
-   
     return nan_columns, nan_nums, df_over_80_nan
 
 
@@ -136,8 +126,8 @@ def check_nan_amount(df, columns):
         df (pandas DataFrame):
         columns (list(STR)): List of columns to search
     Returns:
-        (INT, SET) :a tuple containing a SET of indexes where there is a 
-        NaN value in one of the given columns as well as 
+        (INT, SET) :a tuple containing a SET of indexes where there is a
+        NaN value in one of the given columns as well as
         an INT representing the length of that set.
     '''
     idx = set()
@@ -168,7 +158,7 @@ chosen_cols = ['DMDHHSIZ','SEQN', 'RIDEXAGM', 'RIDAGEYR', 'DMDCITZN',
 #including the above grey collumns would actually be leakage as they explain
 #the chol levels. These will be used for pca in future model
 
-# For future to perform pca on target 
+# For future to perform pca on target
 # nhanes_df['PHAFSTHRMN'] = nhanes_df['PHAFSTHR'] * 60
 # nhanes_df['PHAFSTHRMN'] +=nhanes_df['PHAFSTMN']
 # nhanes_df['PHACOFHRMN'] = nhanes_df['PHACOFHR'] * 60
@@ -387,16 +377,15 @@ if __name__ == "__main__":
         'xlabel': 'Years in 5 year bins',
         'ylabel': 'Number of People'
     }
-     
     age_plot = plot('RIDAGEYR', terms=age_dic)
     # age lim was 80 so bin size of16 creates five year periods
     # age_plot.plot_variable_hist(bin_size=16)
 
-    #remove children 
+    #remove children
     model_nhanes_df = model_nhanes_df[model_nhanes_df['RIDEXAGM'].isnull()]
     # nhanes_df = nhanes_df[nhanes_df['RIDAGEYR'].notnull()]
 
-    # plot missingno 
+    # plot missingno
     # msno.matrix(model_nhanes_df)
     # plt.show()
 
@@ -419,7 +408,7 @@ if __name__ == "__main__":
     nhanes_df['RIDRETH3'].replace([6.0], 'Asian', inplace=True)
     nhanes_df['RIDRETH3'].replace([7.0], 'Other Race or Multi-Racial',
     inplace=True)
-    
+
     ethnicity_dic = {
         'title': 'Ethnicity of Adult Study Participants',
         'ylabel': 'Number of People',
@@ -436,7 +425,7 @@ if __name__ == "__main__":
     }
     tooth_plot = plot('SUMTEETH', terms=tooth_dic)
     # tooth_plot.plot_variable_hist()
-    
+
     target_dic = {
         'title': 'Histogram of Cholesterol values',
         'ylabel': 'People per Bin',
@@ -445,6 +434,5 @@ if __name__ == "__main__":
     target_plot = plot('HDL_OVER_TCHOL', terms=target_dic)
     # target_plot.plot_variable_hist(bin_size=20)
 
-    
-    
+
 

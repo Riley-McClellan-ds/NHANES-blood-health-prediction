@@ -9,7 +9,7 @@
 7. [Conclusion](#Conclusion)
 
 # Goal
-The goal of this project was to attempt to predict blood health based on easily obtained measurements and information from the 2017-2018 NHANES data which was recently published. 
+The goal of this project was to attempt to predict blood cholesterol levels based on easily obtained measurements and information from the 2017-2018 NHANES data which was recently published. 
 
 # Background 
 
