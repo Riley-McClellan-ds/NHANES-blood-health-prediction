@@ -11,7 +11,7 @@ from sklearn import (
     random_projection, preprocessing)
 import missingno as msno
 from plot import plot
-
+from sklearn.impute import SimpleImputer
 
 sns.set_theme(style="darkgrid")
 plt.style.use('ggplot')
@@ -35,9 +35,9 @@ def load_NHANES_data():
     more_lab = "ALB_CR_J.XPT GLU_J.XPT CRCO_J.XPT FOLFMS_J.XPT \
     HEPB_S_J.XPT IHGEM_J.XPT UCM_J.XPT VIC_J.XPT BIOPRO_J.XPT \
     GHB_J.XPT HEPC_J.XPT INS_J.XPT UCPREG_J.XPT VOCWB_J.XPT CBC_J.XPT \
-    FERTIN_J.XPT HEPE_J.XPT  PBCD_J.XPT UHG_J.XPT CMV_J.XPT \
+    FERTIN_J.XPT HEPE_J.XPT PBCD_J.XPT UHG_J.XPT CMV_J.XPT \
     FETIB_J.XPT HEPA_J.XPT HIV_J.XPT UIO_J.XPT COT_J.XPT FOLATE_J.XPT \
-    HEPBD_J.XPT HSCRP_J.XPT UCFLOW_J.XPT  UNI_J.XPT"
+    HEPBD_J.XPT HSCRP_J.XPT UCFLOW_J.XPT UNI_J.XPT"
     questionnaire = "DUQ_J.XPT PAQ_J.XPT SMQ_J.XPT SMQFAM_J.XPT"
     # ADDITIONASL QUESTIONNAIRE: ACQ_J.XPT  DEQ_J.XPT  ECQ_J.XPT  IMQ_J.XPT
     # OSQ_J.XPT RHQ_J.XPT  SMQFAM_J.XPT  WHQMEC_J.XPT AUQ_J.XPT  DIQ_J.XPT
@@ -60,9 +60,9 @@ def load_NHANES_data():
                       'lab/morelab/', 'dietary/']
 
     for idx, i in enumerate(lst):
-        # i = i.replace("    ", " ")
-        # i = i.replace("   ", " ")
-        # i = i.replace("  ", " ")
+        i = i.replace("    ", " ")
+        i = i.replace("   ", " ")
+        i = i.replace("  ", " ")
         i = i.split(" ")
         lst[idx] = i
 
@@ -70,8 +70,7 @@ def load_NHANES_data():
 
     for idx, folder in enumerate(lst):
         for file in folder:
-            df_dic[file] = \
-                           pd.read_sas(f'{path}{file_locations[idx]}{file}',
+            df_dic[file] = pd.read_sas(f'{path}{file_locations[idx]}{file}',
                                        format='xport', encoding='utf-8')
 
     lab_df = df_dic['HDL_J.XPT']\
@@ -92,71 +91,9 @@ def load_NHANES_data():
     nhanes_df = nhanes_df[nhanes_df['RIDEXAGM'].isnull()]
     return nhanes_df
 
-
-
-
-
-def rem_nan_cols(df):
-    """Identifies columns with NaN values and returns number of NaN values
-        per col
-    Args:
-        df (pandas DataFrame) :
-    Returns:
-       2 [List] : 2 lists in parralell with column name and number of NaN
-       values respectively
-       1 [set]: a set of columns where more than 80% of the data are NaN
-    """
-    nan_columns = []
-    nan_nums = []  # in parrallel with nan_columns
-    df_over_80_nan = set()
-    for i in df.columns:
-        if df[i].isnull().values.any():
-            nan_columns.append(i)
-    for i in df.columns:
-        if df[i].isnull().sum():
-            if df[i].isnull().sum() > len(df)*.8:
-                df_over_80_nan.add(i)
-            nan_nums.append(df[i].isnull().sum())
-    return nan_columns, nan_nums, df_over_80_nan
-
-
-def check_nan_amount(df, columns):
-    '''Detects and locates presence of NaN values.
-    Args:
-        df (pandas DataFrame):
-        columns (list(STR)): List of columns to search
-    Returns:
-        (INT, SET) :a tuple containing a SET of indexes where there is a
-        NaN value in one of the given columns as well as
-        an INT representing the length of that set.
-    '''
-    idx = set()
-    for i in columns:
-        for b in df[df[i].isnull()].index.values:
-            idx.add(b)
-    return len(idx), idx
-
-
 # target_cols = ['LBDHDD', 'LBXTC', 'LBXHSCRP']
 # 0 is hdl #1 is total cholesterol #2 is crp
 
-
-nhanes_df['HDL_OVER_TCHOL'] = nhanes_df['LBDHDD']/nhanes_df['LBXTC']
-# above line is for model
-# nhanes_df['HDL_OVER_TCHOL'] = nhanes_df['LBXTC']/nhanes_df['LBDHDD']
-# # uncomment above line in order to plot
-
-target_df = pd.DataFrame()
-target_df['SEQN'] = nhanes_df['SEQN']
-target_df['HDL_OVER_TCHOL'] = nhanes_df['HDL_OVER_TCHOL']
-
-
-chosen_cols = ['DMDHHSIZ', 'SEQN', 'RIDEXAGM', 'RIDAGEYR', 'DMDCITZN',
-               'SUMTEETH', 'BPXSY1', 'BPXDI1', 'BMXBMI', 'BMXWAIST', 'BMXHT',
-               'RIDEXMON', 'RIAGENDR', 'RIDRETH1', 'RIDRETH3', 'DMDEDUC2',
-               'DMDBORN4', 'DMDMARTL', 'SIALANG', "DUQ240", "DUQ250", 'PAQ605',
-               'PAQ620', 'PAQ635', 'PAQ650', 'PAQ665', 'PAD680', 'SMQ020',
-               'SMQ040', 'SMQ900', 'SMD470']
 # 'PHDSESN', 'PHAFSTHRMN', 'PHACOFHRMN']
 # including the above grey collumns would actually be leakage as they explain
 # the chol levels. These will be used for pca in future model
@@ -194,34 +131,6 @@ def make_teeth_column(nhanes_df):
     return nhanes_df
 
 
-nhanes_df = make_teeth_column(nhanes_df)
-
-model_nhanes_df = nhanes_df[chosen_cols]
-
-# rename cols for graph
-
-
-def importance_columns_renamer(model_nhanes_df):
-    """Renames columns for creation of feature importance graph
-
-    Args:
-        model_nhanes_df ([DataFrame]): the dataframe used to create
-        our random forest model.
-
-    Returns:
-        [Dataframe]: [A Dataframe to be used only for graphing puropses.]
-    """
-    naming_columns = {
-        'BMXBMI': 'BMI', 'BMXWAIST ': 'Waist size', "RIDAGEYR": 'Age',
-        'BMXHT': 'Height', 'BPXSY1': 'S. Blood Pressure',
-        'BPXDI1': 'D. Blood Pressure', "SUMTEETH": "Missing/Damaged Teeth",
-        "DMDHHSIZ": "Household size", "RIDEXMON": 'Season of Data collected',
-        "DMDCITZN": "Citizenship status"
-    }
-    model_nhanes_df = model_nhanes_df.rename(columns=naming_columns)
-    return model_nhanes_df
-
-
 def separate_genders(nhanes_df):
     """Splits dataframe by gender
 
@@ -238,37 +147,6 @@ def separate_genders(nhanes_df):
 #                        'demo_quest_exam_feat_df.csv')
 
 
-model_nhanes_df = model_nhanes_df.set_index('SEQN')
-
-target = pd.DataFrame(target_df[['SEQN', 'HDL_OVER_TCHOL']])
-target = target.set_index('SEQN')
-target = target.dropna(how='all')
-
-nhanes_features = target.join(model_nhanes_df, on="SEQN", how='left'
-                              ).drop('HDL_OVER_TCHOL', axis=1)
-nhanes_features = nhanes_features[nhanes_features['RIDEXAGM'].isnull()]
-nhanes_features.drop('RIDEXAGM', axis=1, inplace=True)
-
-target = target.merge(nhanes_features, on='SEQN', how='right')
-target = pd.DataFrame(target['HDL_OVER_TCHOL'])
-
-target = target.to_numpy()
-
-for i in nhanes_features.columns:
-    nhanes_features[i] = nhanes_features[i].replace([np.nan], -999)
-
-
-# model = LinearRegression()
-# model.fit(cholX_train, choly_train)
-# r_sq = model.score(cholX_train, choly_train)
-# print('coefficient of determination:', r_sq, "\n")
-# r_sq = model.score(cholX_test, choly_test)
-# print('coefficient of determination:', r_sq)
-
-# y_pred = model.predict(cholX_test)
-# print(model.score(cholX_test, choly_test))
-# print(y_pred.min())
-# print('predicted response:', y_pred, sep='\n')
 def run_random_forest(nhanes_features, target):
     """Runs a random forest model
 
@@ -291,26 +169,39 @@ def run_random_forest(nhanes_features, target):
     return target_forest
 
 
-def correct_target_bins(nhanes_df):
-    """Creates fake values that cause the bins of the
-    cholesterol graph to line up with 0 and 10
-    Returns:
-        (Pandas DataFrame): temporary version of datframe
-        for graphing purposes only
-    """
-    nhanes_df = nhanes_df[nhanes_df['HDL_OVER_TCHOL'] <= 10]
-    print(nhanes_df['HDL_OVER_TCHOL'].max())
-    nhanes_df.loc[:1, 'HDL_OVER_TCHOL'] = 0.0
-    nhanes_df.loc[1:2, 'HDL_OVER_TCHOL'] = 0.6
-    nhanes_df.loc[2:3, 'HDL_OVER_TCHOL'] = 10.0
-    return nhanes_df
+def create_target(df):
+    df['HDL_OVER_TCHOL'] = df['LBDHDD']/df['LBXTC']
+    pass
 
 
 if __name__ == "__main__":
 
     nhanes_df = load_NHANES_data()
+    nhanes_df = make_teeth_column(nhanes_df)
+    nhanes_df['HDL_OVER_TCHOL'] = nhanes_df['LBDHDD']/nhanes_df['LBXTC']
+    # above line is for model
+    # nhanes_df['HDL_OVER_TCHOL'] = nhanes_df['LBXTC']/nhanes_df['LBDHDD']
+    # # uncomment above line in order to plot
 
+    target_df = pd.DataFrame()
+    target_df['SEQN'] = nhanes_df['SEQN']
+    target_df['HDL_OVER_TCHOL'] = nhanes_df['HDL_OVER_TCHOL']
 
+    model_nhanes_df = model_nhanes_df.set_index('SEQN')
+
+    target = pd.DataFrame(target_df[['SEQN', 'HDL_OVER_TCHOL']])
+    target = target.set_index('SEQN')
+    target = target.dropna(how='all')
+
+    nhanes_features = target.join(model_nhanes_df, on="SEQN", how='left'
+                                  ).drop('HDL_OVER_TCHOL', axis=1)
+    nhanes_features = nhanes_features[nhanes_features['RIDEXAGM'].isnull()]
+    nhanes_features.drop('RIDEXAGM', axis=1, inplace=True)
+
+    target = target.merge(nhanes_features, on='SEQN', how='right')
+    target = pd.DataFrame(target['HDL_OVER_TCHOL'])
+
+    target = target.to_numpy()
 
     target_forest = run_random_forest(nhanes_features, target)
 
