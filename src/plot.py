@@ -138,6 +138,9 @@ class plot:
 
     def plot_importances(self, n=10):
         """ Plots importance ranking of top features in Random Forest model
+
+        Args:
+            n [positive int]: Number of features to be plotted.
         """
         
         self.importance_columns_renamer()
@@ -157,24 +160,17 @@ class plot:
         bl = "#0D8295"
         # Plot the feature importances of the forest
         _, ax = plt.subplots(figsize=(10, 15))
-        colort = ["#FF9F26", "#FF9F26", "#FF9F26", "#FF9F26",
-                  "#FF9F26", "#FF9F26", "#FF9F26", '#0D8295',
-                  "#FF9F26", "#FF9F26", "#FF9F26", "#FF9F26",
-                  "#FF9F26", "#FF9F26", "#FF9F26", "#FF9F26"]
-        colors = ["#FF9F26", "#FF9F26", "#FF9F26", "#FF9F26",
-                  "#FF9F26", "#FF9F26", "#FF9F26", "#FF9F26",
-                  "#FF9F26", "#FF9F26", "#FF9F26", "#FF9F26",
-                  "#FF9F26", "#FF9F26", "#FF9F26", "#FF9F26",
-                  '#0D8295', '#0D8295', '#0D8295',
-                  '#0D8295', '#0D8295']
-        colort = [og, og, og, og, og, og, og, bl, og, bl, og, bl, og,
+        color_fitness_score = [og, og, og, og, og, og, og, bl, og, og, og, og,
+                  og, og, og, og]
+        color_activities = [og, og, og, og, og, og, og, og, og, og, og, og,
+                  og, og, og, og, bl, bl, bl, bl, bl]
+        color_final = [og, og, og, og, og, og, og, bl, og, bl, og, bl, og,
                   og, og, og]
         ax.bar(range(n), importances[indices], yerr=std[indices],
-               color=colors, align="center")
+               color=color_final, align="center")
         ax.set_xticks(range(n))
         ax.set_xticklabels(features, rotation=90)
         ax.set_xlim([-1, n])
-        # ax.set_xlabel("Importance")
         plt.xticks(rotation=30, ha='right')
         ax.set_title("Feature Importances")
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))

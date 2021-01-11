@@ -147,7 +147,17 @@ def run_rfr(features, target):
 
 
 def run_rfc_multioutput(features, target, oversample=False, ts=.25):
+    """[summary]
 
+    Args:
+        features ([type]): [description]
+        target ([type]): [description]
+        oversample (bool, optional): [description]. Defaults to False.
+        ts (float, optional): [description]. Defaults to .25.
+
+    Returns:
+        [type]: [description]
+    """    
     X_train, X_test, y_train, y_test = train_test_split(
         features, target, stratify=target, test_size=ts, random_state=10)
     if oversample:
@@ -178,12 +188,12 @@ def switch_proba(arr, threshold=.98, floor=.5):
             two probabilites if also greater floor value]. Defaults to .98.
         floor (float, optional): [Probabilities above this value in the
             "0" class are swapped with the greater of the remaining
-            two probabilites if also less than threshold 
+            two probabilites if also less than threshold
             value]. Defaults to .5.
 
     Returns:
         [type]: [description]
-    """    
+    """
     new_arr = arr.copy()
     temp_arr = arr.copy()
     # print(new_arr[:10, :], '\n')
@@ -202,7 +212,19 @@ def switch_proba(arr, threshold=.98, floor=.5):
 
 
 def run_rfc_binaryoutput(features, target, oversample=False, ts=.25):
+    """[Creates binary output random forest model using NHANES data]
 
+    Args:
+        features ([pandas DataFrame]): [Features for model]
+        target ([pandas Series]): [pandas Series containing cholesterol in
+                the form of two classes]
+        oversample (bool, optional): [Oversamples data when True]. 
+                                      Defaults to False.
+        ts (float, optional): [Test size]. Defaults to .25.
+
+    Returns:
+        [rfc]: [Binary random forest model]
+    """    
     X_train, X_test, y_train, y_test = train_test_split(
         features, target, stratify=target, test_size=ts, random_state=10)
     if oversample:
@@ -229,6 +251,17 @@ def run_rfc_binaryoutput(features, target, oversample=False, ts=.25):
 
 
 def run_xgb_regressor(features, target, ts=.25):
+    """[Creates an XGBoost regression tree and prints RMSE score]
+
+    Args:
+        features ([pandas DataFrame]): [Features for model]
+        target ([pandas Series]): [pandas Series containing cholesterol in
+                 its original ratio form.]
+        ts (float, optional): [Test size]. Defaults to .25.
+
+    Returns:
+        [xgb_r]: [XGBoost regression model fit to input data]
+    """    
     X_train, X_test, y_train, y_test = train_test_split(
         features, target, test_size=ts, random_state=10)
     xgb_r = xgb.XGBRegressor(objective='reg:squarederror',
@@ -237,20 +270,16 @@ def run_xgb_regressor(features, target, ts=.25):
     xgb_r.fit(X_train, y_train)
 
     pred = xgb_r.predict(X_test)
-    # print(y_test[y_test > 5.0].index)
     z = y_test.to_numpy()
-    print(z)
     x = np.argwhere(z > 5.0)
-    # print(x)
     y = []
     for i in x:
         y.append(i[0])
     for i in y:
         if pred[i] > 5.0:
             print(list(pred)[i])
-
+    # below code showed only 25 values correctly predicted over 5
     # print(len(pred[pred > 5.0]))
-
     # for i in pred[:10]:
     #     print(i)
     rmse = np.sqrt(mse(y_test, pred))
@@ -260,6 +289,19 @@ def run_xgb_regressor(features, target, ts=.25):
 
 
 def run_xgb_classifier(features, target, oversample=False, ts=.25):
+    """[Binary classifer using XGBoost tree]
+
+    Args:
+        features ([pandas DataFrame]): [Features for model]
+        target ([pandas Series]): [pandas Series containing cholesterol in
+                the form of two classes]
+        oversample (bool, optional): [Oversamples data when True]. 
+                                      Defaults to False.
+        ts (float, optional): [Test size]. Defaults to .25.
+
+    Returns:
+        [xgb_c]: [Binary XGBoost classification model]
+    """    
     X_train, X_test, y_train, y_test = train_test_split(
         features, target, stratify=target, test_size=ts, random_state=10)
     if oversample:
@@ -288,6 +330,7 @@ def run_xgb_classifier(features, target, oversample=False, ts=.25):
 
 
 def run_xgb_c_multioutput(features, target, oversample=False, ts=.25):
+
     X_train, X_test, y_train, y_test = train_test_split(
         features, target, stratify=target, test_size=ts, random_state=10)
     if oversample:
@@ -310,30 +353,24 @@ def run_xgb_c_multioutput(features, target, oversample=False, ts=.25):
     print('XGB CLASSIFIER MULTI-OUTPUT STATS:\n')
     print("\n confusion matrix:\n", confusion_matrix(y_test, y_predict))
     print("\n f1 score ", f1_score(y_test, y_predict, average='weighted'))
-    # multi:softmax: set XGBoost to do multiclass
-    # classification using the softmax objective,
-    # you also need to set num_class(number of classes)
     return xgb_c
 
 
 def scree_plot(ax, pca, n_components_to_plot=30, title=None):
-    """Make a scree plot showing the variance explained (i.e. 
-    varaince of the projections) for the principal components 
-    in a fit sklearn PCA object.
+    """[Make a scree plot showing the variance explained (i.e. 
+    variance of the projections) for the principal components 
+    in a fit sklearn PCA object.]
     
-    Parameters
-    ----------
-    ax: matplotlib.axis object
-      The axis to make the scree plot on.
-      
-    pca: sklearn.decomposition.PCA object.
-      A fit PCA object.
-      
-    n_components_to_plot: int
-      The number of principal components to display in the skree plot.
-      
-    title: str
-      A title for the skree plot.
+    Args:
+
+        ax [matplotlib.axis]: The axis to make the scree plot on.
+        
+        pca [sklearn.decomposition.PCA]: A fit PCA object.
+        
+        n_components_to_plot [int]: The number of principal 
+                components to display in the skree plot.
+        
+        title [str]: A title for the skree plot.
     """
     num_components = pca.n_components_
     ind = np.arange(num_components)
@@ -381,22 +418,18 @@ def pca_testing():
     pass
 
 
-def plot_mnist_embedding(ax, X, y, title=None):
-    """Plot an embedding of the mnist dataset onto a plane.
+def plot_pca_embedding(ax, X, y, title=None):
+    """Plot an embedding of the NHANES pca onto a plane.
     
-    Parameters
-    ----------
-    ax: matplotlib.axis object
-      The axis to make the scree plot on.
-      
-    X: numpy.array, shape (n, 2)
-      A two dimensional array containing the coordinates of the embedding.
-      
-    y: numpy.array
-      The labels of the datapoints.  Should be digits.
-      
-    title: str
-      A title for the plot.
+    Args:
+        ax [matplotlib.axis object]: The axis to make the scree plot on.
+        
+        X [numpy.array, shape (n, 2)]: A two dimensional array
+                containing the coordinates of the embedding.
+        
+        y [numpy.array]: The labels of the datapoints. Should be digits.
+
+        title [str]: A title for the plot.
     """
     x_min, x_max = np.min(X, 0), np.max(X, 0)
     X = (X - x_min) / (x_max - x_min)
@@ -501,7 +534,7 @@ if __name__ == '__main__':
     # print(total_df.sort_values('CHOL_RISK'))
 
     # fig, ax = plt.subplots(figsize=(10, 6))
-    # plot_mnist_embedding(ax, X_pca, total_df['CHOL_RISK'].to_numpy())
+    # plot_pca_embedding(ax, X_pca, total_df['CHOL_RISK'].to_numpy())
 
     # rf = run_rfc(X_pca, total_df['CHOL_RISK'])
     # feat_imp = plot('cheese', forest=rf, forest_feat=features)

@@ -130,7 +130,14 @@ class datapipeline:
         return self.df
 
     def create_fitness_score(self):
+        """[Creates feature that calculates minutes per week performing
+        each category of activity as well as adjusting for physiological
+        impact. ex: Vigorous activity has much higher impact than other
+        types of exercise and so is weighted strongly]
 
+        Returns:
+            [df]: [Original df with feature added]
+        """        
         self.df['FITNESS_SCORE_DAY'] = 0
         self.df.loc[self.df['PAQ610'].isin(range(1, 8)),
                     "FITNESS_SCORE_DAY"] += self.df.loc[
@@ -188,22 +195,24 @@ class datapipeline:
                     self.df['PAD680'].isin(range(10, 1320)),
                     'PAD680'] * 1
 
-        # print(self.df['FITNESS_SCORE_MIN'].head(20))
-        # print(self.df['FITNESS_SCORE_MIN'].unique())
-        # print(self.df['FITNESS_SCORE_DAY'].head(20))
-        # print(self.df['FITNESS_SCORE_DAY'].unique())
         return self.df
 
     def blood_pressure(self):
+        """[Creates blood pressure feature]
+        """        
         self.df['BP_DIFF'] = self.df['BPXSY1'] - self.df['BPXDI1']
 
     def fasting_features(self):
+        """[Creates feature that shows how many minutes a patient fasted]
+        """        
         self.df['PHAFSTHRMN'] = self.df['PHAFSTHR'] * 60
         self.df['PHAFSTHRMN'] += self.df['PHAFSTMN']
         self.df['PHACOFHRMN'] = self.df['PHACOFHR'] * 60
         self.df['PHACOFHRMN'] += self.df['PHACOFMN']
 
     def impute_values(self):
+        """[Allows for imputation of values in numeric columns]
+        """        
         numeric_cols = ['SUMTEETH', 'BPXSY1', 'BPXDI1', 'BMXBMI', 'BMXWAIST',
                         'BMXHT', 'RIDAGEYR', 'BMXARML', 'BMXARMC', 'BMXLEG']
 
@@ -215,10 +224,15 @@ class datapipeline:
         return self.df
 
     def replace_nans(self):
+        """[alternative strategy to imputing values for dealing with NaN]
+        """        
         for i in self.df.columns:
             self.df[i] = self.df[i].replace([np.nan], -2)
 
     def create_target(self):
+        """[Creates Cholesterol related target values. Both forms of the 
+        Total Cholesterol/HDL ratio are available]
+        """
         self.df['LBXTC'] = self.df['LBXTC'].replace(-2, 1)
         self.target['HDL_OVER_TCHOL'] = self.df['LBDHDD']/self.df['LBXTC']
         self.target['TCHOL_OVER_HDL'] = self.df['LBXTC']/self.df['LBDHDD']
@@ -228,12 +242,19 @@ class datapipeline:
         return self.target
 
     def create_alt_target(self):
+        """[Creation of alternative target that predicts heart disease]
+        WARNING model not yet optimized for use.
+        """
         self.target['MCQ160C'] = self.df['MCQ160C']
         self.target['SEQN'] = self.df['SEQN']
         self.target = self.target.set_index('SEQN')
         return self.target
 
     def create_features(self):
+        """[Allows for creation of features as well as ability to switch
+        between feature choices, used in random forest model. Switching is
+        used to compare and plot.]
+        """        
         self.make_teeth_column()
         self.create_fitness_score()
         self.fasting_features()
@@ -257,7 +278,7 @@ class datapipeline:
                       'DR1TCHOL', 'BPXSY1', 'DR1TPFAT', 'BMXARML',
                       'SUMTEETH', 'RIDAGEYR', 'PAQ605', 'PAQ620', 'PAQ635',
                       'PAD680', 'PAQ665', 'PAQ650'] 
-        chosen_cols = abrv_cols2
+        chosen_cols = abrv_cols
         #    , 'DR1DRSTZ_x', 'DR1DRSTZ_y', 'DR2DRSTZ_x',
         #    'DR2DRSTZ_y', 'OHDDESTS', 'OHDEXSTS', 'BMIHIP',
         #    'DR2TPROT', 'DR2TPHOS', 'DR2TZINC', 'DR2TATOC',
@@ -269,24 +290,15 @@ class datapipeline:
         return self.features, self.df
 
     def one_hot(self):
+        """one hot encodes the relevant features.
         """
-        Pulls out the features that will actually be run through the model
-        (beyond nlp) and one hot encodes the relevant features.
-        Returns
-        ----------
-        df_one_hot - A pandas dataframe that when joined with the results
-                        of nlp_vectorization can be run through the model.
-        """
-
         variables = ['RIDRETH3', 'DMDMARTL', 'DMDEDUC2']
-
         X = self.features
-
         one_hot_df = pd.get_dummies(X, columns=variables, drop_first=True)
-        # print(one_hot_df.head(1))
         return one_hot_df
 
     def create_rf_X_y(self, model=True):
+        
         clean_nhanes = datapipeline()
         clean_nhanes.merge_dataframes()
         # clean_nhanes.remove_children()
