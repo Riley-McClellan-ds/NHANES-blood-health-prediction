@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer
 import matplotlib as mpl
+from feat_engineer import 
 mpl.rcParams['figure.dpi'] = 200
 
 class datapipeline:
@@ -279,6 +280,9 @@ class datapipeline:
                       'SUMTEETH', 'RIDAGEYR', 'PAQ605', 'PAQ620', 'PAQ635',
                       'PAD680', 'PAQ665', 'PAQ650'] 
         chosen_cols = abrv_cols
+
+        # The following were initially not useful. may require adj. for model.
+        # They also may not be useful at all further investigation needed.
         #    , 'DR1DRSTZ_x', 'DR1DRSTZ_y', 'DR2DRSTZ_x',
         #    'DR2DRSTZ_y', 'OHDDESTS', 'OHDEXSTS', 'BMIHIP',
         #    'DR2TPROT', 'DR2TPHOS', 'DR2TZINC', 'DR2TATOC',
