@@ -108,7 +108,7 @@ The forest was The random forest was not incredibly capable however. Even with 6
 <img src="images/Feat_importances.png">
 </p>
 
-The most influencial features are listed above 
+The most influential features are listed above 
 
 # Conclusion
 
@@ -122,8 +122,9 @@ Finally a critical piece in understanding cholesterol is understanding how it is
 
 - [ ] Standardize Data
 - [ ] Add previous NHANES data
-- [ ] Add more engineered features
+- [x] Add more engineered features
 - [ ] Target PCA
+- [x] SMOTE
 - [ ] SMOTER
 
 
