@@ -31,9 +31,9 @@ An initial overview of the data set including all columns from the selected file
 
 # Data Cleaning 
 
-The sheer number of files included in this data set is so high that I have not counted the files. The initial number of participants included was 8366 for which there were 405 columns representing potential features. AS you can see above there are a lot of missing data points. Each of these features had specific protocols for its recording and storage. Some columns were only partial descriptions of relevant information and required one or more columns to elucidate the data. Not every column was applicable to the entire participant group which is one of the challenges the model faces.
+The initial number of participants included was 8366 for which there were 800 columns representing potential features with additional columns remaining in other files. As you can see above there are a lot of missing data points. Each of these features had specific protocols for its recording and storage. Some columns were only partial descriptions of relevant information and required one or more columns to elucidate the data. Not every column was applicable to the entire participant group which is one of the challenges the model faces.
 
-The limitation of this study hitherto has been the difficulty in understanding how to manipulate such a complex data set. After EDA and further research and studying of the data the initial number of columns was ultimately reduced to 32 features. These features were chosen using a combination of experimentation, research, and the analysts prior knowledge/conjecture. The objectiveness of the feature decision is flawed but were executed as such because of the large number of NaNs and complex recording systems. For some of these a NaN simply means the category does not apply to the participant, for others an imputed value might be possible. For others still the data is categorical and tied to detailed descriptions of the implications of that code which are not easily interpret able by computer. 
+The limitation of this study hitherto has been the difficulty in understanding how to manipulate such a complex data set. After EDA viz, further research, and studying of the data the initial number of columns was ultimately reduced to 17 features. These features were chosen using a combination of experimentation, research, and the analysts prior knowledge/conjecture. The objectiveness of the feature decision is flawed but were executed as such because of the large number of NaNs and complex recording systems. For some of these a NaN simply means the category does not apply to the participant, for others an imputed value might be possible. For others still the data is categorical and tied to detailed descriptions of the implications of that code which are not easily interpret able by computer. 
 
 
 In the end the largest culling of participants was those under the age of 19 which the study had an identifier for. Children have a slew of biological differences that would only serve to confuse a model attempting to predict an outcome. On average children complete puberty at the age of 16 which represents a settling of those hormones however this is not precise and so for the initial study the later age of 19 was chosen.
@@ -44,7 +44,7 @@ In order to have a clear picture of what might be relevant we need to understand
 <p align="center">
 <img src="images/Age_graph.png">
 </p> 
-Above you'll see that the decision to cut children 19 and under was at the cost of a lot of data. Later it may be wise to reevaluate and determine if children aged 16-19 can be included. 
+Above you'll see that the decision to cut children 19 and under was at the cost of a lot of data. Later it may be wise to reevaluate and determine if children aged 16-19 can be useful in their own model. 
 
 <br/><br/>
 <p align="center">
@@ -76,18 +76,18 @@ The target was engineered using HDL and and Total Cholesterol levels which were 
 
 Below is a summary of which columns were utilized from each of the document categories NHANES created for their data.
 
-|Lab(target)|Questionnaire|Demographics|Examination|
-|-----------|-------------|------------|-----------|
-|HDL Content| Daily Time Spent Sedentary| Age | Body Mass Index |
-|Total Cholesterol| Vigorous Work Activity | Gender | Blood Pressure|
-| | Moderate Work Activity |  Ethnicity | Waist Size |
-| | Bike/Walk Involvement  | Education | Height |
-| | Vigorous Recreation | Marital Status | Number of Teeth Missing/Severely Damaged |
-|  | Moderate recreation | Language Interview |
-|  | Hard Drug usage | Time period of Data Retrieval |
-| | Number of Smokers in home | Citizenship |
-| | Smoked 100 Cigarette | Country of Birth |
-| | Active Smoker | 
+|Lab(target)|Questionnaire|Demographics|Examination|Diet|
+|-----------|-------------|------------|-----------|----|
+|HDL Content| Daily Time Spent Sedentary| Age | Body Mass Index | Dietary Cholesterol |
+|Total Cholesterol| Fitness Score | Gender | Blood Pressure| Dietary Fat |
+| | Age at max weight |  | Waist Size |
+| | Max weight (lifetime) |  | Leg Length |
+| |  | | Number of Teeth Missing/Severely Damaged |
+|  | | | Arm Circumfrence|
+|  |  | Height |
+| |  | |
+| |   
+| |  
 | | 
 
 <br/><br/>
@@ -98,11 +98,12 @@ This reduced list of features was much more targeted with significantly less NaN
 </p>
 
 # Model Performance
-Initially a linear regression was attempted but there were several complications that lead me to believe a random forest regression model would be more effective. 
 
-The target expression is normally as seen above as a ratio of total cholesterol to HDL cholesterol. For the target however the inverse was easier for the model to predict since predictions are still easily interpretable in this manner this is still useful to doctors. 
+The target was expressed in Total Cholsterol over HDL which is clinically how doctors often measure risk for heart disease. 
 
-The forest was The random forest was not incredibly capable however. Even with 600 trees the top score only represented a .2117 r squared value, in other words it could only explain about 21% of the data. While this initial attempt does not represent a useful model it did provide a window into methods that should be used to improve the model. 
+The final model had .66% recall which is useful in a clinical setting and had an f1 score of 38%. This represents roughly 3 false positives for every true positive which is not ideal but still somewhat useful. The final model had 3 class output which outperformed binary output by about 5 percent.
+
+5 models apart from the final model were tested including Random forest regression, Random forest binary classification, XGBoost regression, XGBoost binary classification, and XGBoost multi-classification. These models performed worse with varying degrees of failure. Regression models looked to see how many scores were properly identified as being over a ratio of 5 and no more than 25 were correctly predicted with pretty terrible f1 scores. I do not consider these models to be complete until SMOTER is applied to the data. 
 
 <p align="center">
 <img src="images/Feat_importances.png">
@@ -112,20 +113,22 @@ The most influential features are listed above
 
 # Conclusion
 
-While the model cannot be considered predictive at this point several key items were overlooked.
+While the model cannot be considered ideal at this point several key items are yet to be explored.
 
-A basic element of regression is standardizing your data, initially the model was run with far so many features that given the scope of the project it was not feasible to correctly standardize the data. Now that the dimensionality has been heavily reduced standardizing the remaining data will likely greatly improve the results.
+I think that using SMOTER would yield better results for regression. As of now using SMOTE with the classification models helped quite a bit 
 
-SMOTER would likely be helpful in this situation as there is a limited number of targets that exceed average risk for heart attack based on their cholesterol ratio.
+There is definitely room to add more features, more research and testing is required for to do this effectively.
 
-Finally a critical piece in understanding cholesterol is understanding how it is measured. The state the body is in when blood is drawn will heavily influence the levels of cholesterol in the blood. If food is consumed in close proximity to the blood draw it can significantly affect the results of the test. Fasting information therefore should be considered a part of the target. For this reason the model will be trained on a PCA decomposition encompassing both the original target and fasting protocol information. 
+After working on the issue for quite some time I think that the relevant features and interpretability are less important than previously assumed. Becuase of this I would like to create a model using a neural network instead of random forests for boost models. 
 
-- [ ] Standardize Data
+Ultimately This problem is more difficult to answer than the more commonly attempted predictions of disease. It is possible that predictions of disease are more useful in the end however my hopes are that getting ahead of disease by focusing on earlier markers will lead to better preventative care. 
+
+
 - [ ] Add previous NHANES data
 - [x] Add more engineered features
-- [ ] Target PCA
 - [x] SMOTE
 - [ ] SMOTER
+- [ ] Neural Network
 
 
 
